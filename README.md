@@ -461,9 +461,133 @@ Hasil Testing:
 ![](./img/9_1worker_rps.png)
 
 # Soal 10
+Selanjutnya coba tambahkan konfigurasi autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/rahasisakita/ 
+
+## Pengerjaan
+buat submit configAuth.sh untuk mengkonfigurasi autentikasi.
+
+![](./img/10_configAuth.png)
+
+install package apache2-utils, buat direktori rahasiakita di /etc/nginx/. jalankan command htpasswd -c /etc/nginx/rahasiakita/.htpasswd netics untuk men-setting user netics dan password ajkd26. copy lb-granz-with-auth yang berisikan konfigurasi lb ke /etc/nginx/sites-available/lb-granz
+
+![](./img/10_lbgranzwithauth1.png)
+![](./img/10_lbgranzwithauth2.png)
+
+tambahkan auth_basic dan auth_basic_user_file. kemudian buat symbolic link antara /etc/nginx/sites-available/granz dengan /etc/nginx/sites-enabled. kemudian remove default pada /etc/nginx/sites-enabled. kemudian restart nginx.
+
+jalankan dan masukkan ajkd26 sebagai password.
+
+## Testing
+```bash
+lynx granz.channel.d26.com
+```
+
+Hasil:
+
+![](./img/10_enteruser.png)
+![](./img/10_enterpasswd.png)
+
+![](./img/10_page.png)
+
 # Soal 11
+Lalu buat untuk setiap request yang mengandung /its akan di proxy passing menuju halaman https://www.its.ac.id. (11) hint: (proxy_pass)
+
+## Pengerjaan
+tambahkan konfigurasi proxy_pass di lb-granz
+
+![](./img/11_lbgranz.png)
+
+## Testing
+jalankan:
+```bash
+lynx granz.channel.d26.com/its
+```
+
+hasil:
+
+![](./img/11_page.png)
+
 # Soal 12
+Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [Prefix IP].3.70, [Prefix IP].4.167, dan [Prefix IP].4.168. (12) hint: (fixed in dulu clinetnya)
+
+## Pengerjaan
+tambahkan konfigurasi di lb-granz
+
+![](./img/12_lbgranz1.png)
+![](./img/12_lbgranz2.png)
+
+## Testing
+jalankan:
+```bash
+lynx granz.channel.d26.com
+```
+
+di ip:
+
+![](./img/12_ipa.png)
+
+Hasil:
+
+![](./img/12_forbiddenpage.png)
+
+dapat dilihat akan me-return webServer sekarang coba di ip:
+
+![](./img/12_ipallow.png)
+
+hasil:
+
+![](./img/12_success.png)
+
+dapat dilihat ip 192.204.3.69 dapat mengakses web
+
 # Soal 13
+Semua data yang diperlukan, diatur pada Denken dan harus dapat diakses oleh Frieren, Flamme, dan Fern
+
+## config DB Server
+pertama buat script configDB.sh 
+
+![](./img/13_denken_configDB.png)
+
+install package mariadb-server lalu start mysql. copy my.cnf ke /etc/mysql/
+
+![](./img/13_denken_mycnf.png)
+
+kemudian restart server.
+
+masuk ke mysql console dan masukkan command:
+```sql
+CREATE USER 'kelompokd26'@'%' IDENTIFIED BY 'passwordd26';
+CREATE USER 'kelompokd26'@'localhost' IDENTIFIED BY 'passwordd26';
+CREATE DATABASE dbkelompokd26;
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokd26'@'%';
+GRANT ALL PRIVILEGES ON *.* TO 'kelompokd26'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+untuk membuat user. dan cek databases
+
+![](./img/13_denken_mysql.png)
+
+## Config DB Client
+buat script configDBClient.sh pada tiap worker laravel
+
+![](./img/13_worker_configDBClient.png)
+
+install package mariadb-client dan jalankan command untuk akses ke mariadb server. masukkan password: passwordd26
+
+## Testing
+Frieren:
+
+![](./img/13_frieren_test.png)
+
+Flamme:
+
+![](./img/13_flamme_test.png)
+
+Fern:
+
+![](./img/13_fern_test.png)
+
 # Soal 14
 # Soal 15
 # Soal 16
