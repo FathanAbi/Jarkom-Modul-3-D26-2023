@@ -293,9 +293,173 @@ ping google.com, granz.channel.d26.com, riegel.canyon.d26.com:
 ![](./img/2_revolte_ping.png)
 
 # Soal 6
+Pada masing-masing worker PHP, lakukan konfigurasi virtual host untuk website berikut dengan menggunakan php 7.3
+
+## Pengerjaan
+### Deploy Web Server Pada Tiap Worker
+Pertama buat script start.sh pada tiap worker untuk config DNS dan update apt.
+
+![](./img/6_worker_start.sh.png)
+
+download source code dari link gdrive menggunakan wget dan unzip menggunakan unzip
+
+kemudian buat script configWebServer.sh untuk mengkonfig webServer menggunakan nginx.
+
+![](./img/6_worker_configWebServer1.png)
+![](./img/6_worker_configWebServer2.png)
+
+pertama install package nginx, php, dan php-fpm. kemudian buat direktori granz, granz/css, dan granz/js di /var/www/ untuk menyimpan source code web. 
+
+kemudian copy source code yang sudah di download ke direktori yang baru dibuat.
+
+kemudian copy granz yang berisikan konfigurasi web server ke /etc/nginx/sites-available 
+
+worker lawine:
+
+![](./img/6_lawine_granz1.png)
+![](./img/6_lawine_granz2.png)
+
+worker linie:
+
+![](./img/6_linie_granz1.png)
+![](./img/6_linie_granz2.png)
+
+worker lugner:
+
+![](./img/6_lugner_granz1.png)
+![](./img/6_lugner_granz2.png)
+
+kemudian buat symbolic link antara /etc/nginx/sites-available/granz dengan /etc/nginx/sites-enabled. kemudian remove default pada /etc/nginx/sites-enabled. kemudian restart nginx dan php-fpm
+
+### Setup Proxy (Lawine)
+karena granz.channel.d26.com mengarah ke worker (lawine) sedangkan load balancer berada pada node eisen, maka perlu dilakukan set up proxy di lawine untuk proxy pass dari lawine ke eisen. 
+
+buat script configProxy.sh
+
+![](./img/6_lawine_configProxy.png)
+
+pertama install package nginx, php, dan php-fpm. kemudian copy proxy-to-lb yang berisikan konfigurasi proxy ke /etc/nginx/sites-available
+
+![](./img/6_lawine_proxytolb.png)
+
+kemudian buat symbolic link antara /etc/nginx/sites-available/granz dengan /etc/nginx/sites-enabled. kemudian remove default pada /etc/nginx/sites-enabled. kemudian restart nginx
+
+### Setup LB (Eisen)
+kemudian configure load balancer di eisen untuk membagi work ke worker php.
+
+buat script confLB.sh yang berisikan konfigurasi lb:
+
+![](./img/6_eisen_configLB.png)
+
+pertama install package nginx, php, dan php-fpm. kemudian copy lb-granz yang berisikan konfigurasi load balancer ke /etc/nginx/sites-available.
+
+![](./img/6_eisen_lbgranz.png)
+kemudian buat symbolic link antara /etc/nginx/sites-available/granz dengan /etc/nginx/sites-enabled. kemudian remove default pada /etc/nginx/sites-enabled. kemudian restart service nginx
+
+## Testing
+testing granz.channel.d26.com menggunakan lynx
+
+![](./img/6_revolte_test1.png)
+![](./img/6_revolte_test2.png)
+![](./img/6_revolte_test3.png)
+
 # Soal 7
+Kepala suku dari Bredt Region memberikan resource server sebagai berikut:
+* Lawine, 4GB, 2vCPU, dan 80 GB SSD.
+* Linie, 2GB, 2vCPU, dan 50 GB SSD.
+* Lugner 1GB, 1vCPU, dan 25 GB SSD.
+aturlah agar Eisen dapat bekerja dengan maksimal, lalu lakukan testing dengan 1000 request dan 100 request/second.
+
+## Pengerjaan
+dilihat dari spesifikasi yang diberikan didapat urutan server dari yang paling powerful adalah lawine - linie - lugner. modifikasi lb-granz di eisen dengan menambahkan weight sesuai dengan urutan.
+
+![](./img/7_eisen_lbgranz.png)
+
+## Testing
+lakukan testing menggunakan apache benchmark dari package apache2-utils. gunakkan command:
+```bash
+ab -n 1000 -c 100 granz.channel.d26.com/
+```
+Hasil:
+
+![](./img/7_revolte_test.png)
+
+![](./img/7_revolte_rps.png)
+
 # Soal 8
+Karena diminta untuk menuliskan grimoire, buatlah analisis hasil testing dengan 200 request dan 10 request/second masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
+* Nama Algoritma Load Balancer
+* Report hasil testing pada Apache Benchmark
+* Grafik request per second untuk masing masing algoritma. 
+* Analisis (8)
+
+## Round Robin
+Modifikasi lb-granz menjadi:
+
+![](./img/8_lbgranz_rr.png)
+
+hasil testing:
+
+![](./img/8_roundrobin.png)
+![](./img/8_rr_rps.png)
+
+## Weighted Round Robin
+modifikasi lb-granz menjadi:
+![](./img/8_lbgranz_wrr.png)
+
+hasil testing:
+![](./img/8_weightedroundrobin.png)
+![](./img/8_wrr_rps.png)
+
+## Least Connection
+modifikasi lb-granz menjadi:
+![](./img/8_lbgranz_leastconn.png)
+
+
+hasil testing:
+![](./img/8_leastconnection.png)
+![](./img/8_leastconn_rps.png)
+
+## IP Hash
+modifikasi lb-granz menjadi:
+![](./img/8_lbgranz_iphash.png)
+
+
+hasil testing:
+![](./img/8_iphash.png)
+![](./img/8_iphash_rps.png)
+
+## generic Hash
+modifikasi lb-granz menjadi:
+![](./img/8_lbgranz_genhash.png)
+
+
+hasil testing:
+![](./img/8_generichash.png)
+![](./img/8_genhash_rps.png)
+
 # Soal 9
+Dengan menggunakan algoritma Round Robin, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak 100 request dengan 10 request/second, kemudian tambahkan grafiknya pada grimoire.
+
+## 3 Worker
+Hasil Testing:
+
+![](./img/9_3worker.png)
+![](./img/9_3worker_rps.png)
+## 2 Worker
+Stop nginx di lugner
+
+Hasil Testing:
+![](./img/9_2worker.png)
+![](./img/9_2worker_rps.png)
+
+## 1 Worker
+stop nginx di linie
+
+Hasil Testing:
+![](./img/9_1worker.png)
+![](./img/9_1worker_rps.png)
+
 # Soal 10
 # Soal 11
 # Soal 12
